@@ -1,66 +1,70 @@
-// getting all required elements
-const inputBox = document.querySelector(".inputField input");
-console.log(inputBox);
-const addBtn = document.querySelector(".inputField button");
-const todoList = document.querySelector(".todoList");
-const deleteAllBtn = document.querySelector(".footer button");
-// onkeyup event
-inputBox.onkeyup = ()=>{
-  let userEnteredValue = inputBox.value; //getting user entered value
-  if(userEnteredValue.trim() != 0){ //if the user value isn't only spaces
-    addBtn.classList.add("active"); //active the add button
-  }else{
-    addBtn.classList.remove("active"); //unactive the add button
-  }
-}
-showTasks(); //calling showTask function
-addBtn.onclick = ()=>{ 
- //when user click on plus icon button
+const form = document.getElementById("form");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const incompleteButton = document.getElementById("incompleteButton");
+const completedButton = document.getElementById("completedButton");
 
-  let userEnteredValue = inputBox.value; //getting input field value
-  let getLocalStorageData = localStorage.getItem("New Todo"); //getting localstorage
-  if(getLocalStorageData == null){ //if localstorage has no data
-    listArray = []; //create a blank array
-  }else{
-    listArray = JSON.parse(getLocalStorageData);  //transforming json string into a js object
+let tasks = [];
+
+// function to add a task
+function addTask(event) {
+  event.preventDefault();
+  if (taskInput.value.trim() !== "") {
+    tasks.push({ name: taskInput.value.trim(), completed: false });
+    updateList();
+    taskInput.value = "";
   }
-  listArray.push(userEnteredValue); //pushing or adding new value in array
-  localStorage.setItem("New Todo", JSON.stringify(listArray)); //transforming js object into a json string
-  showTasks(); //calling showTask function
-  addBtn.classList.remove("active"); //unactive the add button once the task added
 }
-function showTasks(){
-  let getLocalStorageData = localStorage.getItem("New Todo");
-  if(getLocalStorageData == null){
-    listArray = [];
-  }else{
-    listArray = JSON.parse(getLocalStorageData); 
-  }
-  const pendingTasksNumb = document.querySelector(".pendingTasks");
-  pendingTasksNumb.textContent = listArray.length; //passing the array length in pendingtask
-  if(listArray.length > 0){ //if array length is greater than 0
-    deleteAllBtn.classList.add("active"); //active the delete button
-  }else{
-    deleteAllBtn.classList.remove("active"); //unactive the delete button
-  }
-  let newLiTag = "";
-  listArray.forEach((element, index) => {
-    newLiTag += `<li>${element}<span class="icon" onclick="deleteTask(${index})"><i class="fas fa-trash"></i></span></li>`;
+
+// function to update the task list
+function updateList() {
+  taskList.innerHTML = "";
+  tasks.forEach((task, index) => {
+    const li = document.createElement("li");
+    li.textContent = task.name;
+    if (task.completed) {
+      li.classList.add("completed");
+    }
+    const button = document.createElement("button");
+    button.textContent = "Delete";
+    button.addEventListener("click", () => {
+      deleteTask(index);
+    });
+    li.appendChild(button);
+    li.addEventListener("click", () => {
+      toggleCompleted(index);
+    });
+    taskList.appendChild(li);
   });
-  todoList.innerHTML = newLiTag; //adding new li tag inside ul tag
-  inputBox.value = ""; //once task added leave the input field blank
 }
-// delete task function
-function deleteTask(index){
-  let getLocalStorageData = localStorage.getItem("New Todo");
-  listArray = JSON.parse(getLocalStorageData);
-  listArray.splice(index, 1); //delete or remove the li
-  localStorage.setItem("New Todo", JSON.stringify(listArray));
-  showTasks(); //call the showTasks function
+
+// function to toggle a task between completed and incomplete
+function toggleCompleted(index) {
+  tasks[index].completed = !tasks[index].completed;
+  updateList();
 }
-// delete all tasks function
-deleteAllBtn.onclick = ()=>{
-  listArray = []; //empty the array
-  localStorage.setItem("New Todo", JSON.stringify(listArray)); //set the item in localstorage
-  showTasks(); //call the showTasks function
+
+// function to delete a task
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  updateList();
 }
+
+// function to filter completed tasks
+function showCompleted() {
+  const completedTasks = tasks.filter(task => task.completed);
+  tasks = completedTasks;
+  updateList();
+}
+
+// function to filter incomplete tasks
+function showIncomplete() {
+  const incompleteTasks = tasks.filter(task => !task.completed);
+  tasks = incompleteTasks;
+  updateList();
+}
+
+// event listeners
+form.addEventListener("submit", addTask);
+completedButton.addEventListener("click", showCompleted);
+incompleteButton.addEventListener("click", showIncomplete);
